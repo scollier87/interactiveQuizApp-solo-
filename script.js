@@ -1,3 +1,5 @@
+const databaseURL = 'https://interactivequizapp-69f5a-default-rtdb.firebaseio.com/';
+
 document.addEventListener('DOMContentLoaded', function() {
     const questions = document.querySelectorAll('.question');
     let currentQuestionIndex = 0;
