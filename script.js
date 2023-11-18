@@ -3,15 +3,35 @@ const databaseURL = 'https://interactivequizapp-69f5a-default-rtdb.firebaseio.co
 document.addEventListener('DOMContentLoaded', function() {
     const questions = document.querySelectorAll('.question');
     let currentQuestionIndex = 0;
+    let quizQuestions = [];
 
     const prevButton = document.querySelector('.nav-button.prev');
     const nextButton = document.querySelector('.nav-button.next');
     const progressBar = document.querySelector('.progress');
 
+    function fetchQuestions() {
+        fetch(databaseURL + '/data/Questions.json')
+            .then(response => response.json())
+            .then(data => {
+                console.log("Raw data from Firebase:", data); // Log raw data
+
+                if (data) {
+                    quizQuestions = Object.values(data);
+                    console.log("Fetched Questions:", quizQuestions);
+                    initQuiz();
+                } else {
+                    console.log("No data found at the specified path.");
+                    // Handle the scenario of no data (e.g., display a message to the user)
+                }
+            })
+            .catch(error => console.error("Error fetching data: ", error));
+    }
+
     // Initialize quiz
     function initQuiz() {
+        const questions = document.querySelectorAll('.question');
         questions.forEach((question, index) => {
-            question.style.display = index === 0 ? 'block' : 'none';
+            question.style.display = index === currentQuestionIndex ? 'block' : 'none';
         });
         updateProgressBar();
     }
@@ -24,6 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Show a specific question
     function showQuestion(index) {
+        const questions = document.querySelectorAll('.question');
         questions[currentQuestionIndex].style.display = 'none';
         questions[index].style.display = 'block';
         currentQuestionIndex = index;
@@ -53,6 +74,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Initialize the Quiz
-    initQuiz();
+    fetchQuestions();
 });
