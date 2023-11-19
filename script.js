@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize quiz
     function initQuiz() {
-        clearStaticQuestions();
         displayQuestion(0);
         updateProgressBar();
     }
@@ -113,12 +112,6 @@ document.addEventListener('DOMContentLoaded', function() {
         displayQuestion(index);
         currentQuestionIndex = index;
         updateProgressBar();
-    }
-
-    function clearStaticQuestions() {
-        document.querySelectorAll('.question').forEach(element => {
-            element.style.display = 'none';
-        });
     }
 
     // Update the progress bar

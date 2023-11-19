@@ -3,45 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Quiz</title>
     <link rel="stylesheet" href="styles.css">
-    <title>Interactive Quiz App</title>
-    <script src="script.js" defer></script>
 </head>
 <body>
     <div class="quiz-container">
-        <div class="questions">Questions Area</div>
+        <h1>Interactive Quiz Application</h1>
 
-        <!-- Fill in the Blank Question Area -->
-        <div class="fill-in-the-blank" style="display:none">
-            <input type="text" id="fill-in-answer" placeholder="Type answer here">
+        <!-- Dynamic Question Area -->
+        <div class="question-area">
+            <!-- Questions will be dynamically inserted here -->
         </div>
 
-        <!-- Matching Question Area -->
-        <div class="matching" style="display:none">
-            <!-- Dynamic content for matching questions will be populated here -->
+        <!-- Fill in the Blank Question -->
+        <div class="fill-in-the-blank" style="display: none;">
+            <p class="fill-in-question-text"></p>
+            <input type="text" class="blank-input" placeholder="Type your answer here">
         </div>
 
-        <!-- Ordering Question Area -->
-        <div class="ordering" style="display:none">
-            <!-- Dynamic content for ordering questions will be populated here -->
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress" style="width: 50%;"></div>
         </div>
-
-        <!-- Feedback Area -->
-        <div class="feedback" style="display:none">
-            <!-- Feedback messages will be shown here -->
-        </div>
-
-        <!-- Answers List for Multiple Choice Questions -->
-        <ul class="answers">
-            <!-- Options for multiple-choice questions will be dynamically populated here -->
-        </ul>
 
         <!-- Navigation Buttons -->
-        <div class="btn-container">
-            <button id="prev-btn">Previous</button>
-            <button id="next-btn">Next</button>
-            <button id="submit-btn">Submit</button>
+        <div class="navigation">
+            <button class="nav-button prev">Previous</button>
+            <button class="nav-button next">Next</button>
         </div>
     </div>
+    <script src="script.js"></script>
 </body>
 </html>
