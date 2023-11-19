@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentQuestionIndex > 0) {
             currentQuestionIndex--;
             displayQuestion(currentQuestionIndex);
+            updateProgressBar();
             console.log('prev btn click, currentQuestionIndex:' , currentQuestionIndex);
         }
     });
@@ -25,11 +26,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentQuestionIndex < quizQuestions.length - 1) {
             currentQuestionIndex++;
             displayQuestion(currentQuestionIndex);
+            updateProgressBar();
             console.log('next btn click, currentQuestionIndex:', currentQuestionIndex);
         }
     });
-
-    const progressBar = document.querySelector('.progress');
 
     function fetchQuestions() {
         fetch(databaseURL + '/data/Questions.json')
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
             moveItem(list, -1);
         })
 
-        moveDownButton = document.createElement('button');
+        const moveDownButton = document.createElement('button');
         moveDownButton.textContent = 'Move Down';
         moveDownButton.addEventListener('click', function() {
             moveItem(list, 1);
@@ -174,6 +174,37 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     };
 
+    function displayMatchingQuestion(question) {
+        clearPreviousQuestionDisplay();
+        const questionsArea = document.querySelector('.question-area');
+        questionsArea.innerHTML = '';
+
+        const matchingArea = document.createElement('div');
+        matchingArea.className = 'matching';
+
+        Object.keys(question.pairs).forEach((key, index) => {
+            const label = document.createElement('label');
+            label.textContent = key + ': ';
+            label.htmlFor = 'match-' + index;
+            matchingArea.appendChild(label);
+
+            const select = document.createElement('select');
+            select.id = 'match-' + index;
+
+            Object.values(question.pairs).forEach(value => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                select.appendChild(option);
+            });
+
+            matchingArea.appendChild(select);
+            matchingArea.appendChild(document.createElement('br'));
+        });
+
+        questionsArea.appendChild(matchingArea);
+    };
+
     function clearPreviousQuestionDisplay() {
         const questionTypes = document.querySelectorAll('.question');
         questionTypes.forEach(type => {
@@ -183,8 +214,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update the progress bar
     function updateProgressBar() {
+        const progressBar = document.querySelector('.progress');
         const progressPercentage = (currentQuestionIndex + 1) / quizQuestions.length * 100;
         progressBar.style.width = `${progressPercentage}%`;
+
+        console.log('progress percentage', progressPercentage); // debugging
     }
 
     fetchQuestions();
