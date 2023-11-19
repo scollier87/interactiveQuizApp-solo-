@@ -54,51 +54,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displayMultipleChoiceQuestion(question) {
-        const multipleChoiceContainer = document.querySelector('.multiple-choice');
-        if (!multipleChoiceContainer) {
-            console.error("Multiple choice container not found");
-            return;
-        }
-        multipleChoiceContainer.style.display = 'block';
+        clearPreviousQuestionDisplay();
 
-        const questionText = multipleChoiceContainer.querySelector('.question-text');
-        if (questionText) {
-            questionText.textContent = question.text;
-        } else {
-            console.error("Question text element not found in multiple-choice container");
-            return;
-        }
+        const questionsArea = document.querySelector('.question-area');
+        questionsArea.innerHTML = '';
 
-        const optionsContainer = multipleChoiceContainer.querySelector('.options');
-        if (!optionsContainer) {
-            console.error("Options container not found in multiple-choice container");
-            return;
-        }
-        optionsContainer.innerHTML = ''; // Clear previous options
+        const questionText = document.createElement('p');
+        questionText.textContent = question.text;
+        questionsArea.appendChild(questionText);
+
+        const optionsContainer = document.createElement('div');
+        optionsContainer.className = 'options';
 
         question.options.forEach(option => {
-            const button = document.createElement('button');
-            button.classList.add('option');
-            button.textContent = option;
-            optionsContainer.appendChild(button);
+            const optionButton = document.createElement('button');
+            optionButton.classList.add('option');
+            optionButton.textContent = option;
+
+            optionButton.addEventListener('click', function() {
+                optionsContainer.querySelectorAll('.option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                optionButton.classList.add('selected');
+            })
+            optionsContainer.appendChild(optionButton);
         });
-    }
+        questionsArea.appendChild(optionsContainer);
+    };
 
 
     function displayFillInTheBlankQuestion(question) {
-        const orderingContainer = document.querySelector('.ordering');
-        orderingContainer.style.display = 'block';
-        orderingContainer.querySelector('question-text').textContent = question.text;
-
-        const orderingOptions = orderingContainer.querySelector('ordering-options');
-        orderingOptions.innerHTML = '';
-
-        question.items.forEach(item => {
-            const div = document.createElement('div');
-            div.classList.add('ordering-item');
-            div.textContent = item;
-            orderingOptions.appendChild(div);
-        })
+        const fillInTheBlankContainer = document.querySelector('.fill-in-the-blank');
+        const questionText = document.querySelector('.question-area');
+        questionText.textContent = question.text;
+        fillInTheBlankContainer.style.display = 'block';
     }
 
     function clearPreviousQuestionDisplay() {
@@ -106,12 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
         questionTypes.forEach(type => {
             type.style.display = 'none';
         })
-    }
-
-    function showQuestion(index) {
-        displayQuestion(index);
-        currentQuestionIndex = index;
-        updateProgressBar();
     }
 
     // Update the progress bar
@@ -132,13 +115,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event Listeners for Next and Previous buttons
     prevButton.addEventListener('click', function() {
         if (currentQuestionIndex > 0) {
-            showQuestion(currentQuestionIndex - 1);
+            currentQuestionIndex--;
+            displayQuestion(currentQuestionIndex);
         }
     });
 
     nextButton.addEventListener('click', function() {
         if (currentQuestionIndex < questions.length - 1) {
-            showQuestion(currentQuestionIndex + 1);
+            currentQuestionIndex++;
+            displayQuestion(currentQuestionIndex);
         }
     });
 
