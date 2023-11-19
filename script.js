@@ -31,6 +31,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    function randomQuestions(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
     function fetchQuestions() {
         fetch(databaseURL + '/data/Questions.json')
             .then(response => response.json())
@@ -39,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (data) {
                     quizQuestions = Object.values(data);
+                    randomQuestions(quizQuestions);
                     console.log("Fetched Questions:", quizQuestions);
                     initQuiz();
                 } else {
@@ -177,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayMatchingQuestion(question) {
         clearPreviousQuestionDisplay();
         const questionsArea = document.querySelector('.question-area');
-        questionsArea.innerHTML = '';
+        questionsArea.innerHTML = 'Match correctly';
 
         const matchingArea = document.createElement('div');
         matchingArea.className = 'matching';
