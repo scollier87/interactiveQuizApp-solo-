@@ -1,12 +1,34 @@
 const databaseURL = 'https://interactivequizapp-69f5a-default-rtdb.firebaseio.com/';
 
 document.addEventListener('DOMContentLoaded', function() {
-    const questions = document.querySelectorAll('.question');
     let currentQuestionIndex = 0;
     let quizQuestions = [];
 
     const prevButton = document.querySelector('.nav-button.prev');
     const nextButton = document.querySelector('.nav-button.next');
+
+    if(!prevButton || !nextButton) {
+        console.error('nav buttons not found');
+        return;
+    }
+
+    // Event Listeners for Next and Previous buttons
+    prevButton.addEventListener('click', function() {
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            displayQuestion(currentQuestionIndex);
+            console.log('prev btn click, currentQuestionIndex:' , currentQuestionIndex);
+        }
+    });
+
+    nextButton.addEventListener('click', function() {
+        if (currentQuestionIndex < quizQuestions.length - 1) {
+            currentQuestionIndex++;
+            displayQuestion(currentQuestionIndex);
+            console.log('next btn click, currentQuestionIndex:', currentQuestionIndex);
+        }
+    });
+
     const progressBar = document.querySelector('.progress');
 
     function fetchQuestions() {
@@ -90,6 +112,68 @@ document.addEventListener('DOMContentLoaded', function() {
         fillInTheBlankContainer.style.display = 'block';
     }
 
+    function displayOrderingQuestion(question){
+        clearPreviousQuestionDisplay();
+        const questionsArea = document.querySelector('.question-area');
+        questionsArea.innerHTML = '';
+
+        const questionText = document.createElement('p');
+        questionText.textContent = question.text;
+        questionsArea.appendChild(questionText);
+
+        const list = document.createElement('ul');
+        list.id = 'ordering-list';
+
+        question.items.forEach(item => {
+            const listItem = document.createElement('li');
+            listItem.textContent = item;
+            listItem.classList.add('ordering-item');
+            listItem.addEventListener('click', function() {
+                if(listItem.classList.contains('selected')){
+                    listItem.classList.remove('selected');
+                } else {
+                    list.querySelectorAll('.ordering-item').forEach(item => item.classList.remove('selected'));
+                    listItem.classList.add('selected');
+                }
+            });
+            list.appendChild(listItem);
+        });
+        questionsArea.appendChild(list);
+        addMovementButtons(list);
+    }
+
+    function addMovementButtons(list) {
+        const moveUpButton = document.createElement('button');
+        moveUpButton.textContent = 'Move Up';
+        moveUpButton.addEventListener('click', function() {
+            moveItem(list, -1);
+        })
+
+        moveDownButton = document.createElement('button');
+        moveDownButton.textContent = 'Move Down';
+        moveDownButton.addEventListener('click', function() {
+            moveItem(list, 1);
+        })
+
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.appendChild(moveUpButton);
+        buttonsContainer.appendChild(moveDownButton);
+
+        const questionsArea = document.querySelector('.question-area');
+        questionsArea.appendChild(buttonsContainer);
+    }
+
+    function moveItem(list, direction) {
+        const selected = list.querySelector('.selected');
+        if (!selected) return;
+
+        if(direction === -1 && selected.previousElementSibling) {
+            list.insertBefore(selected, selected.previousElementSibling);
+        } else if (direction === 1 && selected.nextElementSibling){
+            list.insertBefore(selected.nextElementSibling, selected);
+        };
+    };
+
     function clearPreviousQuestionDisplay() {
         const questionTypes = document.querySelectorAll('.question');
         questionTypes.forEach(type => {
@@ -99,43 +183,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update the progress bar
     function updateProgressBar() {
-        const progressPercentage = (currentQuestionIndex + 1) / questions.length * 100;
+        const progressPercentage = (currentQuestionIndex + 1) / quizQuestions.length * 100;
         progressBar.style.width = `${progressPercentage}%`;
     }
-
-    // Show a specific question
-    function showQuestion(index) {
-        const questions = document.querySelectorAll('.question');
-        questions[currentQuestionIndex].style.display = 'none';
-        questions[index].style.display = 'block';
-        currentQuestionIndex = index;
-        updateProgressBar();
-    }
-
-    // Event Listeners for Next and Previous buttons
-    prevButton.addEventListener('click', function() {
-        if (currentQuestionIndex > 0) {
-            currentQuestionIndex--;
-            displayQuestion(currentQuestionIndex);
-        }
-    });
-
-    nextButton.addEventListener('click', function() {
-        if (currentQuestionIndex < questions.length - 1) {
-            currentQuestionIndex++;
-            displayQuestion(currentQuestionIndex);
-        }
-    });
-
-    // Event Listener for Multiple Choice Options
-    document.querySelectorAll('.multiple-choice .option').forEach(option => {
-        option.addEventListener('click', function() {
-            this.parentElement.querySelectorAll('.option').forEach(opt => {
-                opt.classList.remove('selected');
-            });
-            this.classList.add('selected');
-        });
-    });
 
     fetchQuestions();
 });
