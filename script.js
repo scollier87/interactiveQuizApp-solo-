@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event Listeners for Next and Previous buttons
     prevButton.addEventListener('click', function() {
+        // clearPreviousQuestionDisplay();
         if (currentQuestionIndex > 0) {
             currentQuestionIndex--;
             displayQuestion(currentQuestionIndex);
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     nextButton.addEventListener('click', function() {
+        // clearPreviousQuestionDisplay();
         if (currentQuestionIndex < quizQuestions.length - 1) {
             currentQuestionIndex++;
             displayQuestion(currentQuestionIndex);
@@ -106,6 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     opt.classList.remove('selected');
                 });
                 optionButton.classList.add('selected');
+                storeAnswer(question.id, option);
             })
             optionsContainer.appendChild(optionButton);
         });
@@ -114,6 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     function displayFillInTheBlankQuestion(question) {
+        clearPreviousQuestionDisplay();
         const fillInTheBlankContainer = document.querySelector('.fill-in-the-blank');
         const questionText = document.querySelector('.question-area');
         questionText.textContent = question.text;
@@ -214,10 +218,36 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     function clearPreviousQuestionDisplay() {
-        const questionTypes = document.querySelectorAll('.question');
-        questionTypes.forEach(type => {
-            type.style.display = 'none';
-        })
+        const questionArea = document.querySelectorAll('.question-area');
+        if (questionArea) {
+            questionArea.innerHTML = '';
+        }
+
+        const fillInTheBlankContainer = document.querySelector('.fill-in-the-blank');
+        if (fillInTheBlankContainer) {
+            fillInTheBlankContainer.style.display = 'none';
+        }
+    }
+
+    let userAnswers = {};
+
+    function storeAnswer(questionId, answer) {
+        userAnswers[questionId] = answer
+    }
+
+    function validateAnswers() {
+        let correctCount = 0;
+        quizQuestions.forEach(question => {
+            if (userAnswers[question.id] === question.correctAnswer) {
+                correctCount++
+            }
+            displayResults(correctCount);
+        });
+    };
+
+    function displayResults(correctCount) {
+        const totalQuestions = quizQuestions.length;
+        alert(`You got ${correctCount} out of ${totalQuestions} questions correct.`);
     }
 
     // Update the progress bar
