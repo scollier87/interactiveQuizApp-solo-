@@ -3,51 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Quiz</title>
     <link rel="stylesheet" href="styles.css">
+    <title>Interactive Quiz App</title>
+    <script src="script.js" defer></script>
 </head>
 <body>
     <div class="quiz-container">
-        <h1>Interactive Quiz Application</h1>
+        <div class="questions">Questions Area</div>
 
-        <!-- Multiple Choice Question -->
-        <div class="question multiple-choice">
-            <p class="question-text">What is the capital of France?</p>
-            <div class="options">
-                <button class="option">Paris</button>
-                <button class="option">London</button>
-                <button class="option">Berlin</button>
-                <button class="option">Madrid</button>
-            </div>
+        <!-- Fill in the Blank Question Area -->
+        <div class="fill-in-the-blank" style="display:none">
+            <input type="text" id="fill-in-answer" placeholder="Type answer here">
         </div>
 
-        <!-- Fill in the Blank Question -->
-        <div class="question fill-in-the-blank">
-            <p class="question-text">The largest planet in our solar system is _______.</p>
-            <input type="text" class="blank-input">
+        <!-- Matching Question Area -->
+        <div class="matching" style="display:none">
+            <!-- Dynamic content for matching questions will be populated here -->
         </div>
 
-        <!-- Ordering Question -->
-        <div class="question ordering">
-            <p class="question-text">Arrange the following numbers in ascending order.</p>
-            <div class="ordering-options">
-                <div class="ordering-item" id="item1">3</div>
-                <div class="ordering-item" id="item2">1</div>
-                <div class="ordering-item" id="item3">2</div>
-            </div>
+        <!-- Ordering Question Area -->
+        <div class="ordering" style="display:none">
+            <!-- Dynamic content for ordering questions will be populated here -->
         </div>
 
-        <!-- Progress Bar -->
-        <div class="progress-bar">
-            <div class="progress" style="width: 50%;"></div>
+        <!-- Feedback Area -->
+        <div class="feedback" style="display:none">
+            <!-- Feedback messages will be shown here -->
         </div>
+
+        <!-- Answers List for Multiple Choice Questions -->
+        <ul class="answers">
+            <!-- Options for multiple-choice questions will be dynamically populated here -->
+        </ul>
 
         <!-- Navigation Buttons -->
-        <div class="navigation">
-            <button class="nav-button prev">Previous</button>
-            <button class="nav-button next">Next</button>
+        <div class="btn-container">
+            <button id="prev-btn">Previous</button>
+            <button id="next-btn">Next</button>
+            <button id="submit-btn">Submit</button>
         </div>
     </div>
-    <script src="script.js"></script>
 </body>
 </html>

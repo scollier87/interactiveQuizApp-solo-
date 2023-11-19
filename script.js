@@ -29,11 +29,96 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize quiz
     function initQuiz() {
-        const questions = document.querySelectorAll('.question');
-        questions.forEach((question, index) => {
-            question.style.display = index === currentQuestionIndex ? 'block' : 'none';
-        });
+        clearStaticQuestions();
+        displayQuestion(0);
         updateProgressBar();
+    }
+
+    // funct to display a question based on its type
+    function displayQuestion(index) {
+        const question = quizQuestions[index];
+        clearPreviousQuestionDisplay();
+
+        switch (question.type) {
+            case 'fill-in-the-blank':
+                displayFillInTheBlankQuestion(question);
+                break;
+            case "matching":
+                displayMatchingQuestion(question);
+                break;
+            case "ordering":
+                displayOrderingQuestion(question);
+                break;
+            default:
+                displayMultipleChoiceQuestion(question);
+        }
+    }
+
+    function displayMultipleChoiceQuestion(question) {
+        const multipleChoiceContainer = document.querySelector('.multiple-choice');
+        if (!multipleChoiceContainer) {
+            console.error("Multiple choice container not found");
+            return;
+        }
+        multipleChoiceContainer.style.display = 'block';
+
+        const questionText = multipleChoiceContainer.querySelector('.question-text');
+        if (questionText) {
+            questionText.textContent = question.text;
+        } else {
+            console.error("Question text element not found in multiple-choice container");
+            return;
+        }
+
+        const optionsContainer = multipleChoiceContainer.querySelector('.options');
+        if (!optionsContainer) {
+            console.error("Options container not found in multiple-choice container");
+            return;
+        }
+        optionsContainer.innerHTML = ''; // Clear previous options
+
+        question.options.forEach(option => {
+            const button = document.createElement('button');
+            button.classList.add('option');
+            button.textContent = option;
+            optionsContainer.appendChild(button);
+        });
+    }
+
+
+    function displayFillInTheBlankQuestion(question) {
+        const orderingContainer = document.querySelector('.ordering');
+        orderingContainer.style.display = 'block';
+        orderingContainer.querySelector('question-text').textContent = question.text;
+
+        const orderingOptions = orderingContainer.querySelector('ordering-options');
+        orderingOptions.innerHTML = '';
+
+        question.items.forEach(item => {
+            const div = document.createElement('div');
+            div.classList.add('ordering-item');
+            div.textContent = item;
+            orderingOptions.appendChild(div);
+        })
+    }
+
+    function clearPreviousQuestionDisplay() {
+        const questionTypes = document.querySelectorAll('.question');
+        questionTypes.forEach(type => {
+            type.style.display = 'none';
+        })
+    }
+
+    function showQuestion(index) {
+        displayQuestion(index);
+        currentQuestionIndex = index;
+        updateProgressBar();
+    }
+
+    function clearStaticQuestions() {
+        document.querySelectorAll('.question').forEach(element => {
+            element.style.display = 'none';
+        });
     }
 
     // Update the progress bar
