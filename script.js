@@ -40,28 +40,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function fetchQuestions() {
-        fetch(databaseURL + '/data/Questions.json')
-            .then(response => response.json())
-            .then(data => {
-                console.log("Raw data from Firebase:", data); // Log raw data
-
-                if (data) {
-                    // Convert the object into an array and include the question keys as IDs
-                    quizQuestions = Object.entries(data).map(([id, questionData]) => ({
-                        id,
-                        ...questionData
-                    }));
-
-                    randomQuestions(quizQuestions); // Shuffle the questions if needed
-                    console.log("Fetched Questions:", quizQuestions);
-                    initQuiz();
-                } else {
-                    console.log("No data found at the specified path.");
-                    // Handle the scenario of no data (e.g., display a message to the user)
-                }
-            })
-            .catch(error => console.error("Error fetching data: ", error));
+    async function fetchQuestions() {
+        try {
+            const response = await fetch(databaseURL + '/data/Questions.json');
+            const data = await response.json();
+            if (data) {
+                quizQuestions = Object.entries(data).map(([id, questionData]) => ({ id, ...questionData }));
+                randomQuestions(quizQuestions);
+                initQuiz();
+            } else {
+                console.log("No data found at the specified path.");
+            }
+        } catch (error) {
+            console.error("Error fetching data: ", error);
+        }
     }
 
 
