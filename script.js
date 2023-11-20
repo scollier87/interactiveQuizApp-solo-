@@ -164,13 +164,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const questionsArea = document.querySelector('.question-area');
         questionsArea.innerHTML = '';
 
+        //displaying question text
         const questionText = document.createElement('p');
         questionText.textContent = question.text;
         questionsArea.appendChild(questionText);
 
+        //create lkist for ordering items
         const list = document.createElement('ul');
         list.id = 'ordering-list';
 
+        //populate list with items
         question.items.forEach(item => {
             const listItem = document.createElement('li');
             listItem.textContent = item;
@@ -229,6 +232,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const matchingArea = document.createElement('div');
         matchingArea.className = 'matching';
 
+        //store user's selection for this question
+        let userSelection = {};
+
         Object.keys(question.pairs).forEach((key, index) => {
             const label = document.createElement('label');
             label.textContent = key + ': ';
@@ -238,12 +244,30 @@ document.addEventListener('DOMContentLoaded', function() {
             const select = document.createElement('select');
             select.id = 'match-' + index;
 
+            //add an empty default option
+            const defaultOption = document.createElement('option');
+            defaultOption.textContent = '--select--';
+            defaultOption.value = '';
+            select.appendChild(defaultOption);
+
             Object.values(question.pairs).forEach(value => {
                 const option = document.createElement('option');
                 option.value = value;
                 option.textContent = value;
                 select.appendChild(option);
             });
+
+            //set current selection if available
+            if (userAnswers[question.id] && userAnswers[question.id][key]) {
+                select.value = userAnswers[question.id][key];
+            }
+
+            //update the selection in the useranswers object
+            select.addEventListener('change', () => {
+                userSelection[key] = select.value;
+                userAnswers[question.id] = userSelection;
+                storeAnswer(question.id, userSelection);
+            })
 
             matchingArea.appendChild(select);
             matchingArea.appendChild(document.createElement('br'));
@@ -288,16 +312,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateAnswers() {
         // if (Object.keys(userAnswers).length < quizQuestions.length) {
-        //     alert("answer all questions to submit")
+        //     alert("answer all questions to submit");
         //     return;
         // }
 
         let correctCount = quizQuestions.reduce((count, question) => {
+            // Check if the question is a matching type
+            if (question.type === "matching") {
+                let isMatchCorrect = true;
+                for (let key in question.answer) {
+                    if (!userAnswers[question.id] || userAnswers[question.id][key] !== question.answer[key]) {
+                        isMatchCorrect = false;
+                        break;
+                    }
+                }
+                return count + (isMatchCorrect ? 1 : 0);
+            }
+            // For other question types
             return count + (userAnswers[question.id] === question.answer ? 1 : 0);
         }, 0);
+
         alert(`You got ${correctCount} out of ${quizQuestions.length} questions correct.`);
         localStorage.removeItem('quizProgress');
     }
+
 
     // Update the progress bar
     function updateProgressBar() {
