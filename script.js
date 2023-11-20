@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event Listeners for Next and Previous buttons
     prevButton.addEventListener('click', function() {
-        // clearPreviousQuestionDisplay();
         if (currentQuestionIndex > 0) {
             currentQuestionIndex--;
             displayQuestion(currentQuestionIndex);
@@ -24,7 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     nextButton.addEventListener('click', function() {
-        // clearPreviousQuestionDisplay();
         if (currentQuestionIndex < quizQuestions.length - 1) {
             currentQuestionIndex++;
             displayQuestion(currentQuestionIndex);
@@ -32,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('next btn click, currentQuestionIndex:', currentQuestionIndex);
         }
     });
+
 
     function randomQuestions(array) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -293,18 +292,12 @@ document.addEventListener('DOMContentLoaded', function() {
         //     return;
         // }
 
-        let correctCount = 0;
-        quizQuestions.forEach(question => {
-            const userAnswer = userAnswers[question.id];
-            const correctAnswer = question.answer;
-            console.log(`Question ID: ${question.id}, User Answer: ${userAnswer}, Correct Answer: ${correctAnswer}`)
-            if (userAnswer === correctAnswer) {
-                correctCount++
-            }
-        });
-        const totalQuestions = quizQuestions.length;
-        alert(`You got ${correctCount} out of ${totalQuestions} questions correct.`);
-    };
+        let correctCount = quizQuestions.reduce((count, question) => {
+            return count + (userAnswers[question.id] === question.answer ? 1 : 0);
+        }, 0);
+        alert(`You got ${correctCount} out of ${quizQuestions.length} questions correct.`);
+        localStorage.removeItem('quizProgress');
+    }
 
     // Update the progress bar
     function updateProgressBar() {
