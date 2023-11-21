@@ -1,59 +1,71 @@
 const databaseURL = 'https://interactivequizapp-69f5a-default-rtdb.firebaseio.com/';
+let currentQuestionIndex = 0; // Ensure this is a global variable
+let quizQuestions = [];
+let userAnswers = {};
 
-document.addEventListener('DOMContentLoaded', function() {
-    let currentQuestionIndex = 0;
-    let quizQuestions = [];
+document.addEventListener('DOMContentLoaded', async () => {
+    loadQuizProgress();
+    await fetchQuestions(); // Ensure questions are fetched before setting up listeners
+    setupEventListeners(); // Setup listeners after fetching questions
+    displayCurrentQuestion();
+});
 
+function setupEventListeners() {
     const prevButton = document.querySelector('.nav-button.prev');
     const nextButton = document.querySelector('.nav-button.next');
+    const submitButton = document.querySelector('.nav-button.submit');
 
-    if(!prevButton || !nextButton) {
-        console.error('nav buttons not found');
-        return;
-    }
-
-    // Event Listeners for Next and Previous buttons
-    prevButton.addEventListener('click', function() {
-        if (currentQuestionIndex > 0) {
-            currentQuestionIndex--;
-            displayQuestion(currentQuestionIndex);
-            updateProgressBar();
-            console.log('prev btn click, currentQuestionIndex:' , currentQuestionIndex);
-        }
-    });
-
-    nextButton.addEventListener('click', function() {
-        if (currentQuestionIndex < quizQuestions.length - 1) {
-            currentQuestionIndex++;
-            displayQuestion(currentQuestionIndex);
-            updateProgressBar();
-            console.log('next btn click, currentQuestionIndex:', currentQuestionIndex);
-        }
-    });
-
-
-    function randomQuestions(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-    }
-
-    async function fetchQuestions() {
-        try {
-            const response = await fetch(databaseURL + '/data/Questions.json');
-            const data = await response.json();
-            if (data) {
-                quizQuestions = Object.entries(data).map(([id, questionData]) => ({ id, ...questionData }));
-                randomQuestions(quizQuestions);
-                initQuiz();
-            } else {
-                console.log("No data found at the specified path.");
+    if (prevButton) {
+        prevButton.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion(currentQuestionIndex);
+                updateProgressBar();
             }
-        } catch (error) {
-            console.error("Error fetching data: ", error);
-        }
+        });
     }
+
+    if (nextButton) {
+        nextButton.addEventListener('click', () => {
+            if (currentQuestionIndex < quizQuestions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion(currentQuestionIndex);
+                updateProgressBar();
+            }
+        });
+    }
+
+    if (submitButton) {
+        submitButton.addEventListener('click', validateAnswers);
+    }
+}
+
+function randomQuestions(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+async function fetchQuestions() {
+    try {
+        const response = await fetch(databaseURL + '/data/Questions.json');
+        const data = await response.json();
+        if (data) {
+            quizQuestions = Object.entries(data).map(([id, questionData]) => ({ id, ...questionData }));
+            console.log("Fetched Questions:", quizQuestions);
+            if (currentQuestionIndex === 0) {
+                randomQuestions(quizQuestions); // Shuffle only if starting a new quiz
+            }
+            displayQuestion(currentQuestionIndex);
+            updateProgressBar();
+        } else {
+            console.log("No data found at the specified path.");
+        }
+    } catch (error) {
+        console.error("Error fetching data: ", error);
+    }
+}
 
 
     // Initialize quiz
@@ -302,8 +314,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    let userAnswers = {};
-
     function storeAnswer(questionId, answer) {
         userAnswers[questionId] = answer;
         localStorage.setItem('quizProgress', JSON.stringify({currentQuestionIndex, userAnswers}));
@@ -313,15 +323,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const progress = JSON.parse(localStorage.getItem('quizProgress'));
         if (progress) {
             currentQuestionIndex = progress.currentQuestionIndex;
-            userAnswers = progress.userAnswers;
-            displayQuestion(currentQuestionIndex);
-            updateProgressBar();
+            userAnswers = progress.userAnswers || {};
+            console.log('Resuming quiz at index:', currentQuestionIndex);
         } else {
-            displayQuestion(0);
+            currentQuestionIndex = 0; // Starting new quiz
+            userAnswers = {}; // Reset user answers for a new quiz
         }
     }
 
+
+
     document.addEventListener('DOMContentLoaded', loadQuizProgress);
+
+
+
 
     function validateAnswers() {
         /*
@@ -357,7 +372,14 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.removeItem('quizProgress');
     }
 
-
+    function displayCurrentQuestion() {
+        if (quizQuestions.length > 0) {
+            displayQuestion(currentQuestionIndex);
+            updateProgressBar();
+        } else {
+            console.error('Quiz questions not loaded');
+        }
+    }
 
     // Update the progress bar
     function updateProgressBar() {
@@ -369,4 +391,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     fetchQuestions();
-});
