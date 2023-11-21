@@ -159,51 +159,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-    function displayOrderingQuestion(question){
+    function displayOrderingQuestion(question) {
         clearPreviousQuestionDisplay();
         const questionsArea = document.querySelector('.question-area');
         questionsArea.innerHTML = '';
 
-        //displaying question text
+        // Displaying question text
         const questionText = document.createElement('p');
         questionText.textContent = question.text;
         questionsArea.appendChild(questionText);
 
-        //create lkist for ordering items
+        // Create list for ordering items
         const list = document.createElement('ul');
         list.id = 'ordering-list';
 
-        //populate list with items
-        question.items.forEach(item => {
+        // Populate list with items
+        const orderFromStorage = userAnswers[question.id];
+        const items = orderFromStorage || question.items;
+        items.forEach(item => {
             const listItem = document.createElement('li');
             listItem.textContent = item;
             listItem.classList.add('ordering-item');
             listItem.addEventListener('click', function() {
-                if(listItem.classList.contains('selected')){
-                    listItem.classList.remove('selected');
-                } else {
-                    list.querySelectorAll('.ordering-item').forEach(item => item.classList.remove('selected'));
-                    listItem.classList.add('selected');
-                }
+                toggleSelection(listItem);
             });
             list.appendChild(listItem);
         });
         questionsArea.appendChild(list);
-        addMovementButtons(list);
+        addMovementButtons(list, question.id);
     }
 
-    function addMovementButtons(list) {
+    function toggleSelection(listItem) {
+        if (listItem.classList.contains('selected')) {
+            listItem.classList.remove('selected');
+        } else {
+            listItem.closest('ul').querySelectorAll('ordering-items').forEach(item => item.classList.remove('selected'));
+            listItem.classList.add('selected');
+        }
+    }
+
+    function addMovementButtons(list, questionId) {
         const moveUpButton = document.createElement('button');
         moveUpButton.textContent = 'Move Up';
         moveUpButton.addEventListener('click', function() {
-            moveItem(list, -1);
-        })
+            moveItem(list, -1, questionId);
+        });
 
         const moveDownButton = document.createElement('button');
         moveDownButton.textContent = 'Move Down';
         moveDownButton.addEventListener('click', function() {
-            moveItem(list, 1);
-        })
+            moveItem(list, 1, questionId);
+        });
 
         const buttonsContainer = document.createElement('div');
         buttonsContainer.appendChild(moveUpButton);
@@ -213,16 +219,24 @@ document.addEventListener('DOMContentLoaded', function() {
         questionsArea.appendChild(buttonsContainer);
     }
 
-    function moveItem(list, direction) {
+    function moveItem(list, direction, questionId) {
         const selected = list.querySelector('.selected');
         if (!selected) return;
 
-        if(direction === -1 && selected.previousElementSibling) {
+        if (direction === -1 && selected.previousElementSibling) {
             list.insertBefore(selected, selected.previousElementSibling);
-        } else if (direction === 1 && selected.nextElementSibling){
+        } else if (direction === 1 && selected.nextElementSibling) {
             list.insertBefore(selected.nextElementSibling, selected);
-        };
-    };
+        }
+        saveOrder(list, questionId);
+    }
+
+    function saveOrder(list, questionId) {
+        const orderedItems = Array.from(list.querySelectorAll('.ordering-item')).map(item => item.textContent);
+        userAnswers[questionId] = orderedItems;
+        storeAnswer(questionId, orderedItems);
+    }
+
 
     function displayMatchingQuestion(question) {
         clearPreviousQuestionDisplay();
@@ -292,9 +306,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function storeAnswer(questionId, answer) {
         userAnswers[questionId] = answer;
-        console.log("storing answers:", questionId, answer);
         localStorage.setItem('quizProgress', JSON.stringify({currentQuestionIndex, userAnswers}));
-    };
+    }
 
     function loadQuizProgress() {
         const progress = JSON.parse(localStorage.getItem('quizProgress'));
@@ -311,10 +324,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('DOMContentLoaded', loadQuizProgress);
 
     function validateAnswers() {
-        // if (Object.keys(userAnswers).length < quizQuestions.length) {
-        //     alert("answer all questions to submit");
-        //     return;
-        // }
+        /*
+        if (Object.keys(userAnswers).length < quizQuestions.length) {
+            alert("answer all questions to submit");
+            return;
+        }
+        */
 
         let correctCount = quizQuestions.reduce((count, question) => {
             // Check if the question is a matching type
@@ -327,14 +342,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
                 return count + (isMatchCorrect ? 1 : 0);
+            } else if (Array.isArray(userAnswers[question.id]) && Array.isArray(question.answer)) {
+                // For ordering questions, compare arrays
+                const isOrderCorrect = userAnswers[question.id].length === question.answer.length &&
+                                       userAnswers[question.id].every((value, index) => value === question.answer[index]);
+                return count + (isOrderCorrect ? 1 : 0);
+            } else {
+                // For other question types (multiple choice, fill-in-the-blank)
+                return count + (userAnswers[question.id] === question.answer ? 1 : 0);
             }
-            // For other question types
-            return count + (userAnswers[question.id] === question.answer ? 1 : 0);
         }, 0);
 
         alert(`You got ${correctCount} out of ${quizQuestions.length} questions correct.`);
         localStorage.removeItem('quizProgress');
     }
+
 
 
     // Update the progress bar
