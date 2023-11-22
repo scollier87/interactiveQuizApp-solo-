@@ -34,16 +34,33 @@ function handleNavButtonClick(event) {
 }
 
 function handlePreviousButtonClick() {
+    console.log('Current Index Before Previous:', currentQuestionIndex);
     if (currentQuestionIndex > 0) {
         currentQuestionIndex--;
+        console.log('Current Index After Previous:', currentQuestionIndex);
         displayQuestion(currentQuestionIndex);
         updateProgressBar();
+    } else {
+        console.log('Already at the first question, cannot go back further.');
     }
 }
 
+
+function findPreviousUnansweredQuestion(startIndex) {
+    // Find the last unanswered question before startIndex
+    for (let i = startIndex; i >= 0; i--) {
+        if (!userAnswers[quizQuestions[i].id]) {
+            return i;
+        }
+    }
+    return -1; // Return -1 if none found
+}
+
 function handleNextButtonClick() {
+    console.log('Current Index Before Next:', currentQuestionIndex);
     if (currentQuestionIndex < quizQuestions.length - 1) {
         currentQuestionIndex++;
+        console.log('Current Index After Next:', currentQuestionIndex);
         displayQuestion(currentQuestionIndex);
         updateProgressBar();
     }
@@ -54,11 +71,22 @@ async function loadQuizProgress() {
     if (progress) {
         currentQuestionIndex = progress.currentQuestionIndex;
         userAnswers = progress.userAnswers || {};
-        console.log('Resuming quiz at index:', currentQuestionIndex);
+        console.log('Resuming quiz at index:', currentQuestionIndex, 'with answers:', userAnswers);
     } else {
-        currentQuestionIndex = 0; // Starting new quiz
-        userAnswers = {}; // Reset user answers for a new quiz
+        console.log('No progress found. Starting new quiz.');
+        currentQuestionIndex = 0;
+        userAnswers = {};
     }
+}
+
+function findNextUnansweredQuestion(startIndex) {
+    // Find the first unanswered question starting from startIndex
+    for (let i = startIndex; i < quizQuestions.length; i++) {
+        if (!userAnswers[quizQuestions[i].id]) {
+            return i;
+        }
+    }
+    return quizQuestions.length - 1; // If all are answered, return the last index
 }
 
 function randomQuestions(array) {
@@ -74,10 +102,10 @@ async function fetchQuestions() {
         const data = await response.json();
         if (data) {
             quizQuestions = Object.entries(data).map(([id, questionData]) => ({ id, ...questionData }));
-            if (currentQuestionIndex === 0) {
-                randomQuestions(quizQuestions); // Shuffle for a new quiz
-            }
-            console.log("Fetched Questions:", quizQuestions);
+
+            randomQuestions(quizQuestions);
+
+            console.log("Fetched Questions:", quizQuestions); // Log to check fetched questions
         } else {
             console.log("No data found at the specified path.");
         }
@@ -87,23 +115,36 @@ async function fetchQuestions() {
 }
 
 function displayCurrentQuestion() {
-    if (quizQuestions.length > 0) {
+    if (quizQuestions.length > 0 && quizQuestions[currentQuestionIndex]) {
         displayQuestion(currentQuestionIndex);
         updateProgressBar();
     } else {
-        console.error('Quiz questions not loaded');
+        console.error('Quiz questions not loaded or invalid question index:', currentQuestionIndex);
     }
 }
 
 // Initialize quiz
-function initQuiz() {
-    displayQuestion(0);
-    updateProgressBar();
+async function initQuiz() {
+    await loadQuizProgress();
+    await fetchQuestions();
+    displayCurrentQuestion();
+    setupEventDelegationForNavigation();
 }
+
+document.addEventListener('DOMContentLoaded', initQuiz);
 
 // funct to display a question based on its type
 function displayQuestion(index) {
+    if (index < 0 || index >= quizQuestions.length) {
+        console.error('Invalid question index:', index);
+        return; // Exit the function if index is invalid
+    }
+
     const question = quizQuestions[index];
+    if (!question) {
+        console.error('No question found at index:', index);
+        return; // Exit the function if question is undefined
+    }
     clearPreviousQuestionDisplay();
 
     switch (question.type) {
@@ -391,5 +432,3 @@ function updateProgressBar() {
 
     console.log('progress percentage', progressPercentage); // debugging
 }
-
-// fetchQuestions();
