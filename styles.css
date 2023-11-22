@@ -77,3 +77,30 @@ body {
 .nav-button:hover {
     background-color: #0056b3;
 }
+
+.option {
+    background-color: white;
+    border: 1px solid gray;
+    padding: 10px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.option.selected {
+    background-color: lightblue;
+    border-color: blue;
+    color: white;
+}
+
+.ordering-item {
+    padding: 5px 10px;
+    margin: 3px;
+    border: 1px solid gray;
+    cursor: pointer;
+}
+
+.ordering-item.selected {
+    background-color: lightgreen;
+    border-color: green;
+    color: white;
+}
