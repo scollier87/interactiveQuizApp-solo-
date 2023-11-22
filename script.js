@@ -4,8 +4,8 @@ let quizQuestions = [];
 let userAnswers = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadQuizProgress();
     await fetchQuestions();
+    await loadQuizProgress();
     setupEventDelegationForNavigation();
     displayCurrentQuestion();
 });
@@ -69,43 +69,61 @@ function handleNextButtonClick() {
 async function loadQuizProgress() {
     const progress = JSON.parse(localStorage.getItem('quizProgress'));
     if (progress) {
-        currentQuestionIndex = progress.currentQuestionIndex;
         userAnswers = progress.userAnswers || {};
-        console.log('Resuming quiz at index:', currentQuestionIndex, 'with answers:', userAnswers);
+        currentQuestionIndex = findNextUnansweredQuestion();
+        if (currentQuestionIndex === -1 && Object.keys(userAnswers).length === quizQuestions.length) {
+            console.log('All questions have been answered.');
+        } else {
+            console.log('Resuming quiz at index:', currentQuestionIndex);
+        }
     } else {
         console.log('No progress found. Starting new quiz.');
         currentQuestionIndex = 0;
         userAnswers = {};
+        localStorage.removeItem('questionOrder');
     }
 }
 
-function findNextUnansweredQuestion(startIndex) {
-    // Find the first unanswered question starting from startIndex
-    for (let i = startIndex; i < quizQuestions.length; i++) {
-        if (!userAnswers[quizQuestions[i].id]) {
-            return i;
+
+function findNextUnansweredQuestion() {
+    for (let i = 0; i < quizQuestions.length; i++) {
+        if (!userAnswers.hasOwnProperty(quizQuestions[i].id)) {
+            return i; // Return index of next unanswered question
         }
     }
-    return quizQuestions.length - 1; // If all are answered, return the last index
+    return -1; // Return -1 if all questions are answered
 }
 
+
+
 function randomQuestions(array) {
-    for (let i = array.length - 1; i > 0; i--) {
+    let shuffledArray = [...array]; // Create a copy of the array
+    for (let i = shuffledArray.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+        [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
     }
+    return shuffledArray; // Return the shuffled array
 }
+
 
 async function fetchQuestions() {
     try {
         const response = await fetch(databaseURL + '/data/Questions.json');
         const data = await response.json();
         if (data) {
-            quizQuestions = Object.entries(data).map(([id, questionData]) => ({ id, ...questionData }));
+            let fetchedQuestions = Object.entries(data).map(([id, questionData]) => ({ id, ...questionData }));
 
-            randomQuestions(quizQuestions);
+            if (!localStorage.getItem('questionOrder')) {
+                // Shuffle only if the question order is not saved
+                quizQuestions = randomQuestions(fetchedQuestions);
+                localStorage.setItem('questionOrder', JSON.stringify(quizQuestions.map(q => q.id)));
+            } else {
+                // Load questions in saved order
+                let savedOrder = JSON.parse(localStorage.getItem('questionOrder'));
+                quizQuestions = savedOrder.map(id => fetchedQuestions.find(q => q.id === id));
+            }
 
-            console.log("Fetched Questions:", quizQuestions); // Log to check fetched questions
+            console.log("Fetched Questions:", quizQuestions);
         } else {
             console.log("No data found at the specified path.");
         }
@@ -114,14 +132,40 @@ async function fetchQuestions() {
     }
 }
 
+
 function displayCurrentQuestion() {
-    if (quizQuestions.length > 0 && quizQuestions[currentQuestionIndex]) {
-        displayQuestion(currentQuestionIndex);
-        updateProgressBar();
-    } else {
-        console.error('Quiz questions not loaded or invalid question index:', currentQuestionIndex);
+    // Check if there are no questions available
+    if (quizQuestions.length === 0) {
+        console.error('No quiz questions available.');
+        displayMessage('No questions are available at this time.');
+        return;
     }
+
+    // Check if all questions have been answered
+    if (currentQuestionIndex === -1) {
+        console.log('All questions have been answered.');
+        displayMessage('You have completed all questions. Check your results!');
+        return;
+    }
+
+    // Check for an invalid index
+    if (currentQuestionIndex < 0 || currentQuestionIndex >= quizQuestions.length) {
+        console.error('Invalid question index:', currentQuestionIndex);
+        displayMessage('Invalid question index. Please restart the quiz.');
+        return;
+    }
+
+    // Display the current question
+    displayQuestion(currentQuestionIndex);
+    updateProgressBar();
 }
+
+function displayMessage(message) {
+    const questionsArea = document.querySelector('.question-area');
+    questionsArea.innerHTML = `<p>${message}</p>`;
+}
+
+
 
 // Initialize quiz
 async function initQuiz() {
