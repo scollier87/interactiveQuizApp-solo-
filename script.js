@@ -6,37 +6,46 @@ let userAnswers = {};
 document.addEventListener('DOMContentLoaded', async () => {
     await loadQuizProgress();
     await fetchQuestions();
-    setupEventListeners();
+    setupEventDelegationForNavigation();
     displayCurrentQuestion();
 });
 
-function setupEventListeners() {
-    const prevButton = document.querySelector('.nav-button.prev');
-    const nextButton = document.querySelector('.nav-button.next');
-    const submitButton = document.querySelector('.nav-button.submit');
+function setupEventDelegationForNavigation() {
+    const navigationContainer = document.querySelector('.navigation');
 
-    if (prevButton) {
-        prevButton.addEventListener('click', () => {
-            if (currentQuestionIndex > 0) {
-                currentQuestionIndex--;
-                displayQuestion(currentQuestionIndex);
-                updateProgressBar();
-            }
-        });
+    if (navigationContainer) {
+        navigationContainer.addEventListener('click', handleNavButtonClick);
     }
+}
 
-    if (nextButton) {
-        nextButton.addEventListener('click', () => {
-            if (currentQuestionIndex < quizQuestions.length - 1) {
-                currentQuestionIndex++;
-                displayQuestion(currentQuestionIndex);
-                updateProgressBar();
-            }
-        });
+function handleNavButtonClick(event) {
+    const target = event.target;
+
+    if (target.classList.contains('prev')) {
+        // Handle previous button click
+        handlePreviousButtonClick();
+    } else if (target.classList.contains('next')) {
+        // Handle next button click
+        handleNextButtonClick();
+    } else if (target.classList.contains('submit')) {
+        // Handle submit button click
+        validateAnswers();
     }
+}
 
-    if (submitButton) {
-        submitButton.addEventListener('click', validateAnswers);
+function handlePreviousButtonClick() {
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        displayQuestion(currentQuestionIndex);
+        updateProgressBar();
+    }
+}
+
+function handleNextButtonClick() {
+    if (currentQuestionIndex < quizQuestions.length - 1) {
+        currentQuestionIndex++;
+        displayQuestion(currentQuestionIndex);
+        updateProgressBar();
     }
 }
 
@@ -120,11 +129,6 @@ function displayQuestion(index) {
         submitButton.style.display = 'none';
     }
 }}
-
-document.querySelector('.nav-button.submit').addEventListener('click', function() {
-    validateAnswers();
-    localStorage.removeItem('quizProgress');
-});
 
 function displayMultipleChoiceQuestion(question) {
     clearPreviousQuestionDisplay();
@@ -348,7 +352,7 @@ function validateAnswers() {
         return;
     }
     */
-
+    console.log('validate answers is called...')
     let correctCount = quizQuestions.reduce((count, question) => {
         // Check if the question is of 'matching' type
         if (question.type === "matching") {
