@@ -33,12 +33,26 @@
             <button class="nav-button submit" style="display: none;">Submit</button>
         </div>
 
-        <!-- Modal Structure -->
+        <!-- Submit Modal -->
         <div id="login-modal" class="modal">
             <div class="modal-content">
                 <h2>Login to Quiz</h2>
+                <p>Available Users:</p>
+                <p>Sean</p>
+                <p>Zach</p>
                 <input type="text" id="username" placeholder="Enter your name">
                 <button id="login-button">Login</button>
+            </div>
+        </div>
+
+        <div id="quiz-end-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Quiz Completed</h2>
+                <p id="quiz-result"></p>
+            </div>
+            <div class="modal-actions">
+                <button id="reset-quiz">Reset Quiz</button>
+                <button id="quit-quiz">Quit to Log In</button>
             </div>
         </div>
 

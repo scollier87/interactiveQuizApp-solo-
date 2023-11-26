@@ -6,8 +6,16 @@ let userAnswers = {};
 let currentUser = null;
 
 function showModal() {
+    // Clear the input field each time the modal is shown
+    const usernameInput = document.getElementById('username');
+    if (usernameInput) {
+        usernameInput.value = '';
+    }
+
+    // Display the modal
     document.getElementById('login-modal').style.display = 'block';
 }
+
 
 function closeModal() {
     document.getElementById('login-modal').style.display = 'none';
@@ -317,12 +325,14 @@ function displayFillInTheBlankQuestion(question) {
     // Show the fill-in-the-blank container
     fillInTheBlankContainer.style.display = 'block';
 
-    // Update the stored answer whenever the input changes
+    // Update the stored answer and Firebase whenever the input changes
     newInput.addEventListener('input', function() {
-        userAnswers[question.id] = newInput.value;
-        localStorage.setItem('quizProgress', JSON.stringify({ currentQuestionIndex, userAnswers }));
+        const answer = newInput.value.trim();
+        userAnswers[question.id] = answer;
+        storeAnswer(question.id, answer);
     });
 }
+
 
 
 
@@ -510,42 +520,66 @@ document.addEventListener('DOMContentLoaded', loadQuizProgress);
 
 
 function validateAnswers() {
-    /*
-    if (Object.keys(userAnswers).length < quizQuestions.length) {
-        alert("Please answer all questions to submit.");
-        return;
-    }
-    */
-    console.log('validate answers is called...')
-    let correctCount = quizQuestions.reduce((count, question) => {
-        // Check if the question is of 'matching' type
-        if (question.type === "matching") {
-            // Compare each key-value pair in the answer object
-            let isMatchCorrect = true;
-            for (let key in question.answer) {
-                if (!userAnswers[question.id] || userAnswers[question.id][key] !== question.answer[key]) {
-                    isMatchCorrect = false;
-                    break;
-                }
-            }
-            return count + (isMatchCorrect ? 1 : 0);
-        }
-        // For 'ordering' questions, compare the order of the array elements
-        else if (Array.isArray(question.answer)) {
-            const isOrderCorrect = Array.isArray(userAnswers[question.id]) &&
-                                    userAnswers[question.id].length === question.answer.length &&
-                                    userAnswers[question.id].every((value, index) => value === question.answer[index]);
-            return count + (isOrderCorrect ? 1 : 0);
-        }
-        // For other question types (like multiple choice, fill-in-the-blank)
-        else {
-            return count + (userAnswers[question.id] === question.answer ? 1 : 0);
-        }
-    }, 0);
+    console.log("validateAnswers called");
+    console.log("User Answers:", userAnswers);
+    console.log("Quiz Questions:", quizQuestions);
 
+    let correctCount = 0;
+    quizQuestions.forEach(question => {
+        const userAnswer = userAnswers[question.id];
+        console.log(`Checking Question: ${question.id}, Type: ${question.type}`);
+        if (!userAnswer) return; // Skip if no answer
+
+        switch (question.type) {
+            case 'multiple-choice':
+                if (userAnswer === question.answer) {
+                    correctCount++;
+                }
+                break;
+            case 'ordering':
+                if (Array.isArray(userAnswer) && Array.isArray(question.answer) &&
+                    userAnswer.every((value, index) => value === question.answer[index])) {
+                    correctCount++;
+                }
+                break;
+            case 'fill-in-the-blank':
+                if (userAnswer.trim().toLowerCase() === question.answer.toLowerCase()) {
+                    correctCount++;
+                }
+                break;
+            case 'matching':
+                let isMatchCorrect = Object.keys(question.answer).every(key =>
+                    userAnswer[key] && userAnswer[key] === question.answer[key]);
+                if (isMatchCorrect) {
+                    correctCount++;
+                }
+                break;
+        }
+    });
+
+    // Display the score and update in Firebase
     alert(`You got ${correctCount} out of ${quizQuestions.length} questions correct.`);
-    localStorage.removeItem('quizProgress');
+    updateScoreInFirebase(correctCount);
+
+    // Redirect to login
+    redirectToLogin();
 }
+
+function redirectToLogin() {
+    // Redirect to login modal or login page
+    showModal('login-modal'); // Show the login
+}
+
+function updateScoreInFirebase(score) {
+    const progress = { lastQuestionId: quizQuestions[quizQuestions.length - 1].id, totalScore: score };
+    fetch(`${databaseURL}/data/Users/${currentUser}/progress.json`, {
+        method: 'PUT',
+        body: JSON.stringify(progress),
+        headers: {'Content-Type': 'application/json'}
+    }).catch(error => console.error('Error updating progress:', error));
+}
+
+
 
     // Update the progress bar
 function updateProgressBar() {
@@ -559,7 +593,7 @@ function updateProgressBar() {
 function resetUserData() {
     if (!currentUser) return;
 
-    // Reset progress
+    // Reset progress in Firebase
     const initialProgress = {
         lastQuestionId: null,
         totalScore: 0
@@ -570,11 +604,19 @@ function resetUserData() {
         headers: {'Content-Type': 'application/json'}
     }).catch(error => console.error('Error resetting progress:', error));
 
-    // Clear responses
+    // Clear responses in Firebase
     const clearResponses = {};
     fetch(`${databaseURL}/data/Users/${currentUser}/responses.json`, {
         method: 'PUT',
         body: JSON.stringify(clearResponses),
         headers: {'Content-Type': 'application/json'}
     }).catch(error => console.error('Error clearing responses:', error));
+
+    // Clear local user answers and question order
+    userAnswers = {};
+    localStorage.removeItem('quizProgress');
+    localStorage.removeItem('questionOrder'); // Add this line to clear question order
+
+    // reshuffle questions
+    fetchQuestions();
 }
