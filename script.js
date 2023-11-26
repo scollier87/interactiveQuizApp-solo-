@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showModal();
     await fetchQuestions();
     await loadQuizProgress();
+    await loadUserAnswers();
     setupEventDelegationForNavigation();
     displayCurrentQuestion();
 });
@@ -93,6 +94,7 @@ function handlePreviousButtonClick() {
     } else {
         console.log('Already at the first question, cannot go back further.');
     }
+    saveProgressToLocalStorage();
 }
 
 
@@ -114,6 +116,7 @@ function handleNextButtonClick() {
         displayQuestion(currentQuestionIndex);
         updateProgressBar();
     }
+    saveProgressToLocalStorage()
 }
 
 async function loadQuizProgress() {
@@ -137,6 +140,7 @@ async function loadQuizProgress() {
     } catch (error) {
         console.error("Error loading quiz progress:", error);
     }
+    saveProgressToLocalStorage();
 }
 
 
@@ -231,6 +235,7 @@ async function initQuiz() {
     await fetchQuestions();
     displayCurrentQuestion();
     setupEventDelegationForNavigation();
+    saveProgressToLocalStorage();
 }
 
 document.addEventListener('DOMContentLoaded', initQuiz);
@@ -511,6 +516,7 @@ function storeAnswer(questionId, answer) {
         body: JSON.stringify(progress),
         headers: {'Content-Type': 'application/json'}
     }).catch(error => console.error('Error updating progress:', error));
+    saveProgressToLocalStorage();
 }
 
 
@@ -620,3 +626,50 @@ function resetUserData() {
     // reshuffle questions
     fetchQuestions();
 }
+
+async function loadUserAnswers() {
+    if (!currentUser) return;
+
+    try {
+        const response = await fetch(`${databaseURL}/data/Users/${currentUser}/responses.json`);
+        const answers = await response.json();
+
+        if (answers) {
+            userAnswers = answers;
+        } else {
+            userAnswers = {};
+        }
+    } catch (error) {
+        console.error("Error loading user answers:", error);
+    }
+}
+
+function saveProgressToLocalStorage() {
+    if (!currentUser) return;
+
+    const progressKey = `quizProgress_${currentUser}`;
+    const answersKey = `userAnswers_${currentUser}`;
+
+    console.log('Saving to local storage:', progressKey, currentQuestionIndex);
+    console.log('Saving to local storage:', answersKey, userAnswers);
+
+    localStorage.setItem(progressKey, JSON.stringify(currentQuestionIndex));
+    localStorage.setItem(answersKey, JSON.stringify(userAnswers));
+}
+
+
+async function loadProgressFromLocalStorage() {
+    if (!currentUser) return;
+
+    const progressKey = `quizProgress_${currentUser}`;
+    const answersKey = `userAnswers_${currentUser}`;
+
+    const savedProgress = localStorage.getItem(progressKey);
+    const savedAnswers = localStorage.getItem(answersKey);
+
+    currentQuestionIndex = savedProgress ? JSON.parse(savedProgress) : 0;
+    userAnswers = savedAnswers ? JSON.parse(savedAnswers) : {};
+}
+
+localStorage.setItem('test', '123');
+console.log(localStorage.getItem('test')); // Should log '123'
