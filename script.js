@@ -3,7 +3,48 @@ let currentQuestionIndex = 0; // Ensure this is a global variable
 let quizQuestions = [];
 let userAnswers = {};
 
+let currentUser = null;
+
+function showModal() {
+    document.getElementById('login-modal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('login-modal').style.display = 'none';
+}
+
+document.getElementById('login-button').addEventListener('click', async function() {
+    const username = document.getElementById('username').value.trim();
+    if (!username) {
+        alert("Please enter a username.");
+        return;
+    }
+
+    const userExists = await checkUserExists(username);
+    if (userExists) {
+        currentUser = username;
+        closeModal();
+        initQuiz(); // Start/resume the quiz
+    } else {
+        alert("User not found. Please enter a valid username.");
+    }
+});
+
+async function checkUserExists(username) {
+    try {
+        const response = await fetch(`${databaseURL}/data/Users/${username}.json`);
+        const data = await response.json();
+        return data !== null; // User exists if data is not null
+    } catch (error) {
+        console.error("Error checking user:", error);
+        return false;
+    }
+}
+
+
+
 document.addEventListener('DOMContentLoaded', async () => {
+    showModal();
     await fetchQuestions();
     await loadQuizProgress();
     setupEventDelegationForNavigation();
@@ -30,6 +71,7 @@ function handleNavButtonClick(event) {
     } else if (target.classList.contains('submit')) {
         // Handle submit button click
         validateAnswers();
+        resetUserData();
     }
 }
 
@@ -67,22 +109,29 @@ function handleNextButtonClick() {
 }
 
 async function loadQuizProgress() {
-    const progress = JSON.parse(localStorage.getItem('quizProgress'));
-    if (progress) {
-        userAnswers = progress.userAnswers || {};
-        currentQuestionIndex = findNextUnansweredQuestion();
-        if (currentQuestionIndex === -1 && Object.keys(userAnswers).length === quizQuestions.length) {
-            console.log('All questions have been answered.');
+    if (!currentUser) return;
+
+    try {
+        const response = await fetch(`${databaseURL}/data/Users/${currentUser}/progress.json`);
+        const progress = await response.json();
+
+        if (progress) {
+            const lastQuestionIndex = quizQuestions.findIndex(q => q.id === progress.lastQuestionId);
+            currentQuestionIndex = lastQuestionIndex + 1;
+
+            // Check if the currentQuestionIndex is beyond the list of questions
+            if (currentQuestionIndex >= quizQuestions.length) {
+                currentQuestionIndex = -1; // Indicate all questions have been answered
+            }
         } else {
-            console.log('Resuming quiz at index:', currentQuestionIndex);
+            currentQuestionIndex = 0; // Start from the beginning if no progress is found
         }
-    } else {
-        console.log('No progress found. Starting new quiz.');
-        currentQuestionIndex = 0;
-        userAnswers = {};
-        localStorage.removeItem('questionOrder');
+    } catch (error) {
+        console.error("Error loading quiz progress:", error);
     }
 }
+
+
 
 
 function findNextUnansweredQuestion() {
@@ -159,6 +208,7 @@ function displayCurrentQuestion() {
     displayQuestion(currentQuestionIndex);
     updateProgressBar();
 }
+
 
 function displayMessage(message) {
     const questionsArea = document.querySelector('.question-area');
@@ -421,9 +471,38 @@ function clearPreviousQuestionDisplay() {
 }
 
 function storeAnswer(questionId, answer) {
+    if (!currentUser) return;
+
+    // Update the user's responses
+    const timestamp = new Date().toISOString();
+    const userResponse = { response: answer, timestamp };
+    fetch(`${databaseURL}/data/Users/${currentUser}/responses/${questionId}.json`, {
+        method: 'PUT',
+        body: JSON.stringify(userResponse),
+        headers: {'Content-Type': 'application/json'}
+    }).catch(error => console.error('Error saving response:', error));
+
+    // Update the userAnswers object
     userAnswers[questionId] = answer;
-    localStorage.setItem('quizProgress', JSON.stringify({currentQuestionIndex, userAnswers}));
+
+    // Calculate the total score
+    let totalScore = 0;
+    quizQuestions.forEach(question => {
+        const userAnswer = userAnswers[question.id];
+        if (userAnswer && userAnswer === question.answer) {
+            totalScore++; // Increment score for each correct answer
+        }
+    });
+
+    // Update the user's progress
+    const progress = { lastQuestionId: questionId, totalScore: totalScore };
+    fetch(`${databaseURL}/data/Users/${currentUser}/progress.json`, {
+        method: 'PUT',
+        body: JSON.stringify(progress),
+        headers: {'Content-Type': 'application/json'}
+    }).catch(error => console.error('Error updating progress:', error));
 }
+
 
 document.addEventListener('DOMContentLoaded', loadQuizProgress);
 
@@ -475,4 +554,27 @@ function updateProgressBar() {
     progressBar.style.width = `${progressPercentage}%`;
 
     console.log('progress percentage', progressPercentage); // debugging
+}
+
+function resetUserData() {
+    if (!currentUser) return;
+
+    // Reset progress
+    const initialProgress = {
+        lastQuestionId: null,
+        totalScore: 0
+    };
+    fetch(`${databaseURL}/data/Users/${currentUser}/progress.json`, {
+        method: 'PUT',
+        body: JSON.stringify(initialProgress),
+        headers: {'Content-Type': 'application/json'}
+    }).catch(error => console.error('Error resetting progress:', error));
+
+    // Clear responses
+    const clearResponses = {};
+    fetch(`${databaseURL}/data/Users/${currentUser}/responses.json`, {
+        method: 'PUT',
+        body: JSON.stringify(clearResponses),
+        headers: {'Content-Type': 'application/json'}
+    }).catch(error => console.error('Error clearing responses:', error));
 }
