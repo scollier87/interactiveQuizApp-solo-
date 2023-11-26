@@ -1,0 +1,105 @@
+{
+  "data": {
+    "Questions": {
+      "q1": {
+        "answer": "Paris",
+        "options": [
+          "Paris",
+          "London",
+          "Berlin",
+          "Madrid"
+        ],
+        "text": "What is the capital of France?",
+        "type": "multiple-choice"
+      },
+      "q2": {
+        "answer": [
+          "Mercury",
+          "Venus",
+          "Earth",
+          "Mars"
+        ],
+        "items": [
+          "Mercury",
+          "Venus",
+          "Earth",
+          "Mars"
+        ],
+        "text": "Arrange the planets from closest to farthest from the sun.",
+        "type": "ordering"
+      },
+      "q3": {
+        "answer": "Alaska",
+        "text": "What is the largest state in the USA?",
+        "type": "fill-in-the-blank"
+      },
+      "q4": {
+        "answer": {
+          "California": "Sacramento",
+          "Georgia": "Atlanta",
+          "Maryland": "Annapolis",
+          "New York": "Albany"
+        },
+        "pairs": {
+          "California": "Sacramento",
+          "Georgia": "Atlanta",
+          "Maryland": "Annapolis",
+          "New York": "Albany"
+        },
+        "text": "Match the state with its capital.",
+        "type": "matching"
+      },
+      "q5": {
+        "answer": "Rhode Island",
+        "text": "What is the smallest state in the USA?",
+        "type": "fill-in-the-blank"
+      },
+      "q6": {
+        "answer": "Object-Oriented",
+        "options": [
+          "Object-Oriented",
+          "Object-Based",
+          "Procedural",
+          "None of the above"
+        ],
+        "text": "Javascript is an _______ language?",
+        "type": "multiple-choice"
+      },
+      "q7": {
+        "answer": "all of the above",
+        "options": [
+          "document.write()",
+          "console.log()",
+          "window.alert()",
+          "all of the above"
+        ],
+        "text": "Which of the following methods can be used to display data in some form using Javascript?",
+        "type": "multiple-choice"
+      }
+    },
+    "Users": {
+      "Sean": {
+        "progress": {
+          "lastQuestionId": "q4",
+          "totalScore": 0
+        },
+        "responses": {
+          "q4": {
+            "response": {
+              "California": "Sacramento",
+              "Georgia": "Atlanta",
+              "Maryland": "Annapolis",
+              "New York": "Albany"
+            },
+            "timestamp": "2023-11-26T17:05:13.774Z"
+          }
+        }
+      },
+      "Zach": {
+        "progress": {
+          "totalScore": 0
+        }
+      }
+    }
+  }
+}
